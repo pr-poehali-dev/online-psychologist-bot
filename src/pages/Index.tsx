@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -35,57 +35,58 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState('chat');
   const [showBreathingTimer, setShowBreathingTimer] = useState(false);
   const [selectedTechnique, setSelectedTechnique] = useState<{ title: string; inhale: number; hold: number; exhale: number } | null>(null);
-  const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([
-    {
-      id: '1',
-      mood: 'Спокойно',
-      emoji: '😌',
-      note: 'Хороший день, продуктивная работа',
-      date: new Date(Date.now() - 86400000)
-    },
-    {
-      id: '2',
-      mood: 'Тревожно',
-      emoji: '😰',
-      note: 'Беспокойство о будущем',
-      date: new Date(Date.now() - 172800000)
-    },
-    {
-      id: '3',
-      mood: 'Радостно',
-      emoji: '😊',
-      note: 'Встреча с друзьями',
-      date: new Date(Date.now() - 259200000)
-    },
-    {
-      id: '4',
-      mood: 'Устало',
-      emoji: '😴',
-      note: 'Мало спал, но всё хорошо',
-      date: new Date(Date.now() - 345600000)
-    },
-    {
-      id: '5',
-      mood: 'Спокойно',
-      emoji: '😌',
-      note: 'Ровный спокойный день',
-      date: new Date(Date.now() - 432000000)
-    },
-    {
-      id: '6',
-      mood: 'Грустно',
-      emoji: '😔',
-      note: 'Немного одиноко',
-      date: new Date(Date.now() - 518400000)
-    },
-    {
-      id: '7',
-      mood: 'Радостно',
-      emoji: '😊',
-      note: 'Успехи на работе',
-      date: new Date(Date.now() - 604800000)
+  const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([]);
+  const [selectedMood, setSelectedMood] = useState<{ emoji: string; label: string } | null>(null);
+  const [moodNote, setMoodNote] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const API_URL = 'https://functions.poehali.dev/28b7b01a-34bb-4242-826a-d91aa573fd24';
+
+  useEffect(() => {
+    loadMoodEntries();
+  }, []);
+
+  const loadMoodEntries = async () => {
+    try {
+      const response = await fetch(API_URL);
+      const data = await response.json();
+      const entries = data.entries.map((entry: any) => ({
+        ...entry,
+        date: new Date(entry.date)
+      }));
+      setMoodEntries(entries);
+    } catch (error) {
+      console.error('Error loading mood entries:', error);
     }
-  ]);
+  };
+
+  const saveMoodEntry = async () => {
+    if (!selectedMood) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          mood: selectedMood.label,
+          emoji: selectedMood.emoji,
+          note: moodNote
+        })
+      });
+
+      const newEntry = await response.json();
+      setMoodEntries([{ ...newEntry, date: new Date(newEntry.date) }, ...moodEntries]);
+      setSelectedMood(null);
+      setMoodNote('');
+    } catch (error) {
+      console.error('Error saving mood entry:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSendMessage = () => {
     if (!inputMessage.trim()) return;
@@ -292,18 +293,28 @@ const Index = () => {
                     {moods.map((mood) => (
                       <Button
                         key={mood.label}
-                        variant="outline"
+                        variant={selectedMood?.label === mood.label ? 'default' : 'outline'}
                         className="h-24 flex flex-col gap-2 hover:bg-secondary transition-all hover:scale-105"
+                        onClick={() => setSelectedMood(mood)}
                       >
                         <span className="text-4xl">{mood.emoji}</span>
                         <span className="text-xs">{mood.label}</span>
                       </Button>
                     ))}
                   </div>
-                  <Input placeholder="Добавьте заметку о вашем состоянии..." className="mb-3" />
-                  <Button className="w-full">
+                  <Input 
+                    placeholder="Добавьте заметку о вашем состоянии..." 
+                    className="mb-3"
+                    value={moodNote}
+                    onChange={(e) => setMoodNote(e.target.value)}
+                  />
+                  <Button 
+                    className="w-full" 
+                    onClick={saveMoodEntry}
+                    disabled={!selectedMood || isLoading}
+                  >
                     <Icon name="Plus" size={18} className="mr-2" />
-                    Сохранить запись
+                    {isLoading ? 'Сохранение...' : 'Сохранить запись'}
                   </Button>
                 </CardContent>
               </Card>

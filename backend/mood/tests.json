@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "name": "Create mood entry",
+      "method": "POST",
+      "body": {
+        "mood": "Радостно",
+        "emoji": "😊",
+        "note": "Отличный день"
+      },
+      "expectedStatus": 201,
+      "expectedBody": {
+        "id": "string",
+        "mood": "Радостно",
+        "emoji": "😊",
+        "note": "Отличный день",
+        "date": "string"
+      },
+      "bodyMatcher": "partial"
+    },
+    {
+      "name": "Get mood entries",
+      "method": "GET",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "entries": "array"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
