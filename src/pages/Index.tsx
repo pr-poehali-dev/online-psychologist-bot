@@ -7,6 +7,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import Icon from '@/components/ui/icon';
+import BreathingTimer from '@/components/BreathingTimer';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -32,6 +33,8 @@ const Index = () => {
   ]);
   const [inputMessage, setInputMessage] = useState('');
   const [activeTab, setActiveTab] = useState('chat');
+  const [showBreathingTimer, setShowBreathingTimer] = useState(false);
+  const [selectedTechnique, setSelectedTechnique] = useState<{ title: string; inhale: number; hold: number; exhale: number } | null>(null);
   const [moodEntries, setMoodEntries] = useState<MoodEntry[]>([
     {
       id: '1',
@@ -119,27 +122,41 @@ const Index = () => {
       title: 'Дыхание 4-7-8',
       description: 'Вдох на 4 счета, задержка на 7, выдох на 8',
       icon: 'Wind',
-      duration: '5 мин'
+      duration: '5 мин',
+      breathing: { inhale: 4, hold: 7, exhale: 8 }
     },
     {
-      title: 'Прогрессивная релаксация',
-      description: 'Поочередное напряжение и расслабление мышц',
+      title: 'Квадратное дыхание',
+      description: 'Вдох 4, задержка 4, выдох 4, пауза 4',
+      icon: 'Square',
+      duration: '5 мин',
+      breathing: { inhale: 4, hold: 4, exhale: 4 }
+    },
+    {
+      title: 'Глубокое дыхание',
+      description: 'Медленный вдох 6 счетов, выдох 6 счетов',
+      icon: 'Heart',
+      duration: '8 мин',
+      breathing: { inhale: 6, hold: 0, exhale: 6 }
+    },
+    {
+      title: 'Быстрое успокоение',
+      description: 'Вдох на 3, задержка 3, выдох на 6',
       icon: 'Sparkles',
-      duration: '15 мин'
-    },
-    {
-      title: 'Медитация осознанности',
-      description: 'Фокус на настоящем моменте без оценки',
-      icon: 'Brain',
-      duration: '10 мин'
-    },
-    {
-      title: 'Визуализация',
-      description: 'Представление спокойного безопасного места',
-      icon: 'Eye',
-      duration: '8 мин'
+      duration: '3 мин',
+      breathing: { inhale: 3, hold: 3, exhale: 6 }
     }
   ];
+
+  const handleStartBreathing = (technique: typeof relaxationTechniques[0]) => {
+    setSelectedTechnique({
+      title: technique.title,
+      inhale: technique.breathing.inhale,
+      hold: technique.breathing.hold,
+      exhale: technique.breathing.exhale
+    });
+    setShowBreathingTimer(true);
+  };
 
   const emergencyContacts = [
     { name: 'Телефон доверия', number: '8-800-2000-122', available: '24/7' },
@@ -412,7 +429,7 @@ const Index = () => {
                   </CardHeader>
                   <CardContent>
                     <p className="text-muted-foreground mb-4">{technique.description}</p>
-                    <Button className="w-full">
+                    <Button className="w-full" onClick={() => handleStartBreathing(technique)}>
                       <Icon name="Play" size={18} className="mr-2" />
                       Начать практику
                     </Button>
@@ -503,6 +520,13 @@ const Index = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {showBreathingTimer && selectedTechnique && (
+        <BreathingTimer
+          technique={selectedTechnique}
+          onClose={() => setShowBreathingTimer(false)}
+        />
+      )}
     </div>
   );
 };
