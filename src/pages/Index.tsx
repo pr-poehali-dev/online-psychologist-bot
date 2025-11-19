@@ -46,6 +46,41 @@ const Index = () => {
       emoji: '😰',
       note: 'Беспокойство о будущем',
       date: new Date(Date.now() - 172800000)
+    },
+    {
+      id: '3',
+      mood: 'Радостно',
+      emoji: '😊',
+      note: 'Встреча с друзьями',
+      date: new Date(Date.now() - 259200000)
+    },
+    {
+      id: '4',
+      mood: 'Устало',
+      emoji: '😴',
+      note: 'Мало спал, но всё хорошо',
+      date: new Date(Date.now() - 345600000)
+    },
+    {
+      id: '5',
+      mood: 'Спокойно',
+      emoji: '😌',
+      note: 'Ровный спокойный день',
+      date: new Date(Date.now() - 432000000)
+    },
+    {
+      id: '6',
+      mood: 'Грустно',
+      emoji: '😔',
+      note: 'Немного одиноко',
+      date: new Date(Date.now() - 518400000)
+    },
+    {
+      id: '7',
+      mood: 'Радостно',
+      emoji: '😊',
+      note: 'Успехи на работе',
+      date: new Date(Date.now() - 604800000)
     }
   ]);
 
@@ -256,31 +291,103 @@ const Index = () => {
                 </CardContent>
               </Card>
 
-              <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle>История записей</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[300px]">
-                    <div className="space-y-4">
-                      {moodEntries.map((entry) => (
-                        <div key={entry.id} className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50">
-                          <span className="text-4xl">{entry.emoji}</span>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="font-medium">{entry.mood}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {entry.date.toLocaleDateString('ru-RU')}
-                              </span>
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle>История записей</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-[300px]">
+                      <div className="space-y-4">
+                        {moodEntries.map((entry) => (
+                          <div key={entry.id} className="flex items-start gap-4 p-4 rounded-lg bg-secondary/50">
+                            <span className="text-4xl">{entry.emoji}</span>
+                            <div className="flex-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium">{entry.mood}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {entry.date.toLocaleDateString('ru-RU')}
+                                </span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">{entry.note}</p>
                             </div>
-                            <p className="text-sm text-muted-foreground">{entry.note}</p>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+
+                <Card className="shadow-lg">
+                  <CardHeader>
+                    <CardTitle>Статистика настроения</CardTitle>
+                    <CardDescription>Последние 7 дней</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {(() => {
+                        const moodCounts = moodEntries.reduce((acc, entry) => {
+                          acc[entry.mood] = (acc[entry.mood] || 0) + 1;
+                          return acc;
+                        }, {} as Record<string, number>);
+
+                        const maxCount = Math.max(...Object.values(moodCounts));
+
+                        return Object.entries(moodCounts).map(([mood, count]) => {
+                          const emoji = moodEntries.find(e => e.mood === mood)?.emoji || '😊';
+                          const percentage = (count / moodEntries.length) * 100;
+                          const barWidth = (count / maxCount) * 100;
+
+                          return (
+                            <div key={mood} className="space-y-2">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="flex items-center gap-2">
+                                  <span className="text-2xl">{emoji}</span>
+                                  <span className="font-medium">{mood}</span>
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {count} {count === 1 ? 'день' : 'дней'} ({percentage.toFixed(0)}%)
+                                </span>
+                              </div>
+                              <div className="h-3 bg-secondary rounded-full overflow-hidden">
+                                <div
+                                  className="h-full bg-gradient-to-r from-primary to-primary/70 rounded-full transition-all duration-500"
+                                  style={{ width: `${barWidth}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
+                    
+                    <Separator className="my-6" />
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5">
+                        <span className="text-sm font-medium">Всего записей</span>
+                        <Badge variant="secondary" className="text-base">
+                          {moodEntries.length}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center justify-between p-3 rounded-lg bg-primary/5">
+                        <span className="text-sm font-medium">Самое частое настроение</span>
+                        <Badge variant="secondary" className="text-base">
+                          {(() => {
+                            const moodCounts = moodEntries.reduce((acc, entry) => {
+                              acc[entry.mood] = (acc[entry.mood] || 0) + 1;
+                              return acc;
+                            }, {} as Record<string, number>);
+                            const topMood = Object.entries(moodCounts).sort((a, b) => b[1] - a[1])[0];
+                            const emoji = moodEntries.find(e => e.mood === topMood[0])?.emoji;
+                            return `${emoji} ${topMood[0]}`;
+                          })()}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
           </TabsContent>
 
